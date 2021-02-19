@@ -68,7 +68,7 @@ class ProcGeo:
 
     def get_random_open_triangles(self, start_angle_degree, end_angle_degree, min_angle_degree=5, as_array=True):
         start_angle = np.radians(np.random.randint(start_angle_degree, high=end_angle_degree))
-        end_angle = np.radians(np.random.randint(start_angle + min_angle_degree, high=end_angle_degree))
+        end_angle = np.radians(np.random.randint(start_angle_degree + min_angle_degree, high=end_angle_degree))
 
         length = np.random.randint(self.min_pts_distance, high=self.max_pts_distance)
 
@@ -92,9 +92,9 @@ class ProcGeo:
         self.__verify_inside_viewport(pt1, "OpenTri1")
 
         if as_array:
-            return np.array([center, pt0, pt1])
+            return np.array([pt0, center, pt1])
 
-        return tuple(center), tuple(pt0), tuple(pt1)
+        return tuple(pt0), tuple(center), tuple(pt1)
 
     def get_random_box2(self):
         # - select a direction on a unit circle

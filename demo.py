@@ -1,6 +1,8 @@
 from image.image import Image
 from utils.procgeo import ProcGeo
 
+Image.debug = True
+
 size = 500, 500
 if __name__ == "__main__":
     for i in range(10):
