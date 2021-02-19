@@ -8,5 +8,6 @@ if __name__ == "__main__":
         image = Image(size)
         # image.add_simplex(proc.get_random_line())
         # image.add_simplex(proc.get_random_rect())
-        image.add_ellipse(proc.get_random_rect(False))
+        image.add_lines(proc.get_random_open_triangles(180, 270, 5, False))
+        # image.add_ellipse(proc.get_random_rect(False))
         image.show()

@@ -23,6 +23,13 @@ class Image:
     def add_simplex(self, bound_pts, line_thickness=1, line_color=color.black):
         cv2.drawContours(self.image, [bound_pts], 0, line_color, line_thickness)
 
+    def add_lines(self, pts, line_thickness=1, line_color=color.black):
+        prev_pt = None
+        for pt in pts:
+            if not prev_pt is None:
+                cv2.line(self.image, prev_pt, pt, line_color, line_thickness)
+            prev_pt = pt
+
     def set_blur(self, ksize):
         return cv2.blur(self.image, ksize)
 
