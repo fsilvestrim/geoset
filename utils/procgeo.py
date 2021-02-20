@@ -14,8 +14,9 @@ class ProcGeo:
 
     def __verify_inside_viewport(self, pt, label=None):
         if pt[0] < 0 or pt[1] < 0 or pt[0] > self.width or pt[1] > self.height:
-            warnings.warn("point %s(%s) outside of the viewport (%i,%i)" % (
-                '' if label is None else label, pt, self.width, self.height), Warning)
+            msg = "point %s(%s) outside of the viewport (%i,%i)" % (
+                '' if label is None else label, pt, self.width, self.height)
+            raise ValueError(msg)
 
     def get_random_rect(self, as_array=True):
         width = np.random.randint(self.min_pts_distance, high=self.width - self.min_pts_distance)
@@ -55,7 +56,7 @@ class ProcGeo:
 
         tan_projection = np.minimum(np.abs(np.tan(angle_radians)), 1)
         max_length_x = tan_projection * (self.width - self.margin_safe_area)
-        cotan_projection = np.minimum(np.abs(1/np.tan(angle_radians)), 1)
+        cotan_projection = np.minimum(np.abs(1 / np.tan(angle_radians)), 1)
         max_length_y = cotan_projection * (self.height - self.margin_safe_area)
         max_length = np.hypot(max_length_x, max_length_y)
 
