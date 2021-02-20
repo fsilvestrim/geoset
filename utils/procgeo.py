@@ -11,16 +11,15 @@ class ProcGeo:
         self.height = bounds[1]
         self.margin_safe_area = margin_safe_area
         self.min_pts_distance = min_pts_distance
-        self.max_pts_distance = np.minimum(self.width, self.height) - margin_safe_area
 
     def __verify_inside_viewport(self, pt, label=None):
         if pt[0] < 0 or pt[1] < 0 or pt[0] > self.width or pt[1] > self.height:
             warnings.warn("point %s(%s) outside of the viewport (%i,%i)" % (
-            '' if label is None else label, pt, self.width, self.height), Warning)
+                '' if label is None else label, pt, self.width, self.height), Warning)
 
     def get_random_rect(self, as_array=True):
-        width = np.random.randint(self.min_pts_distance, high=self.max_pts_distance)
-        height = np.random.randint(self.min_pts_distance, high=self.max_pts_distance)
+        width = np.random.randint(self.min_pts_distance, high=self.width - self.min_pts_distance)
+        height = np.random.randint(self.min_pts_distance, high=self.height - self.min_pts_distance)
 
         center_x = np.random.randint(width * .5, high=self.width - width * .5)
         center_y = np.random.randint(height * .5, high=self.height - height * .5)
@@ -37,11 +36,44 @@ class ProcGeo:
 
         return box
 
-    def get_random_line(self, as_array=True):
-        pt0 = np.random.randint(self.min_pts_distance, high=self.max_pts_distance), np.random.randint(
-            self.min_pts_distance, high=self.max_pts_distance)
-        pt1 = np.random.randint(self.min_pts_distance, high=self.max_pts_distance), np.random.randint(
-            self.min_pts_distance, high=self.max_pts_distance)
+    def __get_min_bounds(self, length, minimum):
+        return minimum if length > minimum else -length
+
+    def __get_max_bounds(self, length, maximum):
+        return maximum - length if length < maximum else maximum - length
+
+    def __get_min_max_bounds(self, val0, val1, min_size, max_size):
+        bounds_min = np.maximum(self.__get_min_bounds(val0, min_size), self.__get_min_bounds(val1, min_size))
+        bounds_max = np.maximum(self.__get_max_bounds(val0, max_size), self.__get_max_bounds(val1, max_size))
+
+        return bounds_min, bounds_max
+
+    def get_random_line(self, start_angle_range_degree, end_angle_range_degree, as_array=True):
+        angle_degree = np.random.randint(start_angle_range_degree, high=end_angle_range_degree) \
+            if start_angle_range_degree != end_angle_range_degree else start_angle_range_degree
+        angle_radians = np.radians(angle_degree)
+
+        tan_projection = np.minimum(np.abs(np.tan(angle_radians)), 1)
+        max_length_x = tan_projection * (self.width - self.margin_safe_area)
+        cotan_projection = np.minimum(np.abs(1/np.tan(angle_radians)), 1)
+        max_length_y = cotan_projection * (self.height - self.margin_safe_area)
+        max_length = np.hypot(max_length_x, max_length_y)
+
+        length = np.random.randint(self.min_pts_distance, high=max_length)
+
+        pt1 = np.array([np.cos(angle_radians) * length, np.sin(angle_radians) * length])
+
+        pt0_x_min_max = self.__get_min_bounds(pt1[0], 0), \
+                        self.__get_max_bounds(pt1[0], self.width - self.margin_safe_area)
+
+        pt0_y_min_max = self.__get_min_bounds(pt1[1], 0), \
+                        self.__get_max_bounds(pt1[1], self.height - self.margin_safe_area)
+
+        pt0 = np.array([np.random.randint(pt0_x_min_max[0], high=pt0_x_min_max[1]), \
+                        np.random.randint(pt0_y_min_max[0], high=pt0_y_min_max[1])])
+
+        pt0 = np.int0(pt0)
+        pt1 = np.int0(pt0 + pt1)
 
         self.__verify_inside_viewport(pt0, "Line0")
         self.__verify_inside_viewport(pt1, "Line1")
@@ -49,22 +81,7 @@ class ProcGeo:
         if as_array:
             return np.array([pt0, pt1])
 
-        return pt0, pt1
-
-    def __get_min_bounds(self, val, minimum):
-        return -val if val < minimum else minimum
-
-    def __get_max_bounds(self, val, maximum):
-        return maximum - val if val > maximum else maximum
-
-    def __get_min_max_bounds(self, val0, val1, min_size, max_size):
-        bounds_min = np.maximum(self.__get_min_bounds(val0, min_size), \
-                                self.__get_min_bounds(val1, min_size))
-
-        bounds_max = np.maximum(self.__get_max_bounds(val0, max_size), \
-                                self.__get_max_bounds(val1, max_size))
-
-        return bounds_min, bounds_max
+        return tuple(pt0), tuple(pt1)
 
     def get_random_open_triangles(self, start_angle_degree, end_angle_degree, min_angle_degree=5, as_array=True):
         start_angle = np.radians(np.random.randint(start_angle_degree, high=end_angle_degree))
