@@ -11,3 +11,7 @@ def get_cvt_color(scalar_color):
 def get_pts_from_rect(rect):
     box = cv2.boxPoints(rect)
     return np.int0(box)
+
+
+def cv_bl_2_tl(pt, bounds):
+    return pt[0], bounds[1] - pt[1]

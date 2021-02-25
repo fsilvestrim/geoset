@@ -92,6 +92,23 @@ class ProcGeoTestUtils(unittest.TestCase):
         self.assertAlmostEqual(expected_projection_x, projections[0], delta=0.01, msg="X - angle:%i" % angle_degrees)
         self.assertAlmostEqual(expected_projection_y, projections[1], delta=0.01, msg="Y - angle:%i" % angle_degrees)
 
+    @parameterized.expand([
+        [0,     200,     0],  # 0
+        [45,    200,   200],  # 1
+        [90,    0,     200],  # 2
+        [135,   200,   200],  # 3
+        [180,   200,     0],  # 4
+        [225,   200,   200],  # 5
+        [270,   0,     200],  # 6
+        [315,   200,   200],  # 7
+        [360,   200,     0],  # 8
+        [405,   200,   200],  # 9
+    ])
+    def test__get_max_size(self, angle_degrees, expected_size_x, expected_size_y):
+        size = ProcGeo((200, 200), 0, 0).get_max_size(angle_degrees)
+        self.assertAlmostEqual(expected_size_x, size[0], delta=0.01, msg="X - angle:%i" % angle_degrees)
+        self.assertAlmostEqual(expected_size_y, size[1], delta=0.01, msg="Y - angle:%i" % angle_degrees)
+
 
 if __name__ == '__main__':
     unittest.main()
