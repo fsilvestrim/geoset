@@ -18,25 +18,6 @@ class ProcGeo:
                 '' if label is None else label, pt, self.width, self.height)
             raise ValueError(msg)
 
-    def get_random_rect(self, as_array=True):
-        width = np.random.randint(self.min_pts_distance, high=self.width - self.min_pts_distance)
-        height = np.random.randint(self.min_pts_distance, high=self.height - self.min_pts_distance)
-
-        center_x = np.random.randint(width * .5, high=self.width - width * .5)
-        center_y = np.random.randint(height * .5, high=self.height - height * .5)
-
-        box = ((center_x, center_y), (width, height), 0)
-
-        pts = get_pts_from_rect(box)
-
-        for idx, pt in enumerate(pts):
-            self.__verify_inside_viewport(pt, "Rect%i" % idx)
-
-        if as_array:
-            return pts
-
-        return box
-
     @staticmethod
     def get_min_max_bounds(val, minimum, maximum):
         if val > maximum:
@@ -46,47 +27,45 @@ class ProcGeo:
         high = maximum - val if val >= minimum else maximum
 
         if low >= high:
-            raise ValueError("low (%i) is bigger than high (%i). val:%i, min:%i, max:%i" % (low, high, val, minimum, maximum))
+            raise ValueError(
+                "low (%i) is bigger than high (%i). val:%i, min:%i, max:%i" % (low, high, val, minimum, maximum))
 
         return low, high
 
-    #
-    # @staticmethod
-    # def get_min_max_bounds(self, val0, val1, min_size, max_size):
-    #     bounds_min = np.maximum(self.get_min_bounds(val0, min_size), self.get_min_bounds(val1, min_size))
-    #     bounds_max = np.maximum(self.get_max_bounds(val0, max_size), self.get_max_bounds(val1, max_size))
-    #
-    #     return bounds_min, bounds_max
+    @staticmethod
+    def get_square_unit_projection(angle, angle_is_in_radians=False):
+        angle = angle % np.radians(360) if angle_is_in_radians else np.radians(angle % 360)
+        x_projection = 1/np.tan(angle) * (-1 if angle / np.radians(90) > 2 else 1)
+        y_projection = np.tan(angle) * (-1 if 1 < angle / np.radians(90) <= 3 else 1)
+        return np.round(np.clip(x_projection, -1, 1), 10), np.round(np.clip(y_projection, -1, 1), 10)
+
+    def get_max_projection(self, angle, convert_to_radians=False):
+        x, y = self.get_square_unit_projection(angle, convert_to_radians)
+
+        # now we know the longest length
+        max_length_x = np.clip(np.abs(x), 0, 1) * (self.width - self.margin_safe_area * 2)
+        max_length_y = np.clip(np.abs(y), 0, 1) * (self.height - self.margin_safe_area * 2)
+
+        return np.hypot(max_length_x, max_length_y)
 
     def get_random_line(self, start_angle_range_degree, end_angle_range_degree, as_array=True):
         # get random angle
-        angle_degree = np.random.randint(start_angle_range_degree, high=end_angle_range_degree) \
-            if start_angle_range_degree != end_angle_range_degree else start_angle_range_degree
-        angle_radians = np.radians(angle_degree)
-
-        # find projections on the square unit
-        x_projection = np.clip(np.abs(1/np.tan(np.radians(angle_radians))), 0, 1)
-        y_projection = np.clip(np.abs(np.tan(np.radians(angle_radians))), 0, 1)
-
-        # now we know the longest length
-        max_length_x = x_projection * (self.width - self.margin_safe_area*2)
-        max_length_y = y_projection * (self.height - self.margin_safe_area*2)
-        max_length = np.hypot(max_length_x, max_length_y)
+        angle_radians = np.radians(np.random.randint(start_angle_range_degree, high=end_angle_range_degree)
+                                   if start_angle_range_degree != end_angle_range_degree else start_angle_range_degree)
 
         # get random length
-        length = np.random.randint(self.min_pts_distance, high=max_length)
+        length = np.random.randint(self.min_pts_distance, high=self.get_max_projection(angle_radians))
 
         # find the new 2d pt from the origin
         pt1 = np.array([np.cos(angle_radians) * length, np.sin(angle_radians) * length])
-
-        pt0_x_min_max = self.get_min_max_bounds(pt1[0], self.margin_safe_area, self.width - self.margin_safe_area)
-        pt0_y_min_max = self.get_min_max_bounds(pt1[1], self.margin_safe_area, self.height - self.margin_safe_area)
+        pt1_x_min_max = self.get_min_max_bounds(pt1[0], self.margin_safe_area, self.width - self.margin_safe_area)
+        pt1_y_min_max = self.get_min_max_bounds(pt1[1], self.margin_safe_area, self.height - self.margin_safe_area)
 
         pt0 = np.array([
-            np.random.randint(pt0_x_min_max[0], high=pt0_x_min_max[1])
-            if pt0_x_min_max[0] != pt0_x_min_max[1] else pt0_x_min_max[0],
-            np.random.randint(pt0_y_min_max[0], high=pt0_y_min_max[1])
-            if pt0_y_min_max[0] != pt0_y_min_max[1] else pt0_y_min_max[0]])
+            np.random.randint(pt1_x_min_max[0], high=pt1_x_min_max[1])
+            if pt1_x_min_max[0] != pt1_x_min_max[1] else pt1_x_min_max[0],
+            np.random.randint(pt1_y_min_max[0], high=pt1_y_min_max[1])
+            if pt1_y_min_max[0] != pt1_y_min_max[1] else pt1_y_min_max[0]])
 
         pt0 = np.int0(pt0)
         pt1 = np.int0(pt0 + pt1)
@@ -100,23 +79,40 @@ class ProcGeo:
         return tuple(pt0), tuple(pt1)
 
     def get_random_open_triangles(self, start_angle_degree, end_angle_degree, min_angle_degree=5, as_array=True):
-        start_angle = np.radians(np.random.randint(start_angle_degree, high=end_angle_degree))
-        end_angle = np.radians(np.random.randint(start_angle_degree + min_angle_degree, high=end_angle_degree))
+        if np.diff(end_angle_degree, start_angle_degree) < min_angle_degree:
+            raise ValueError("The angle between start (%i) and end (%i) is less than the min angle %i" % (
+                start_angle_degree, end_angle_degree, min_angle_degree))
 
-        length = np.random.randint(self.min_pts_distance, high=self.margin_safe_area)
+        # get random angle
+        p0_angle_radians = np.radians(np.random.randint(start_angle_degree, high=end_angle_degree))
+        p1_angle_radians = np.radians(np.random.randint(start_angle_degree + min_angle_degree, high=end_angle_degree))
 
-        pt0 = np.array([np.cos(start_angle) * length, np.sin(start_angle) * length])
-        pt1 = np.array([np.cos(end_angle) * length, np.sin(end_angle) * length])
+        # get max length
+        p0_max_lengths = self.get_max_projection(p0_angle_radians)
+        p1_max_lengths = self.get_max_projection(p1_angle_radians)
 
-        center_x_min_max = self.get_min_max_bounds(pt0[0], pt1[0], self.min_pts_distance,
-                                                   self.width - self.margin_safe_area)
+        # max_ = (self.min_pts_distance, high=self.get_max_length(start_radians))
+        end_length = np.random.randint(self.min_pts_distance, high=self.get_max_projection(p1_angle_radians))
+        max_length = 0
+        length = np.random.randint(self.min_pts_distance, high=max_length)
 
-        center_y_min_max = self.get_min_max_bounds(pt0[1], pt1[1], self.min_pts_distance,
-                                                   self.height - self.margin_safe_area)
+        # position the 2 random points in the circle unit and scale it
+        pt0 = np.array([np.cos(p0_angle_radians) * max_length, np.sin(p0_angle_radians) * max_length])
+        pt0_x_min_max = self.get_min_max_bounds(pt0[0], self.margin_safe_area, self.width - self.margin_safe_area)
+        pt0_y_min_max = self.get_min_max_bounds(pt0[1], self.margin_safe_area, self.height - self.margin_safe_area)
 
-        center = np.array([np.random.randint(center_x_min_max[0], high=center_x_min_max[1]), \
-                           np.random.randint(center_y_min_max[0], high=center_y_min_max[1])])
+        pt1 = np.array([np.cos(p1_angle_radians) * max_length, np.sin(p1_angle_radians) * max_length])
+        pt1_x_min_max = self.get_min_max_bounds(pt1[0], self.margin_safe_area, self.width - self.margin_safe_area)
+        pt1_y_min_max = self.get_min_max_bounds(pt1[1], self.margin_safe_area, self.height - self.margin_safe_area)
 
+        # find the center point
+        center_x = np.random.randint(np.maximum(pt0_x_min_max[0], pt1_x_min_max[0]),
+                                     high=np.maximum(pt0_x_min_max[1], pt1_x_min_max[1]))
+        center_y = np.random.randint(np.maximum(pt0_y_min_max[0], pt1_y_min_max[0]),
+                                     high=np.maximum(pt0_y_min_max[1], pt1_y_min_max[1]))
+        center = np.array([center_x, center_y])
+
+        # re-position the other points
         pt0 = np.int0(center + pt0)
         pt1 = np.int0(center + pt1)
 
@@ -128,6 +124,25 @@ class ProcGeo:
             return np.array([pt0, center, pt1])
 
         return tuple(pt0), tuple(center), tuple(pt1)
+
+    def get_random_rect(self, as_array=True):
+        width = np.random.randint(self.min_pts_distance, high=self.width - self.min_pts_distance)
+        height = np.random.randint(self.min_pts_distance, high=self.height - self.min_pts_distance)
+
+        center_x = np.random.randint(self.margin_safe_area + width * .5, high=self.width - width * .5 - self.margin_safe_area)
+        center_y = np.random.randint(self.margin_safe_area + height * .5, high=self.height - height * .5 - self.margin_safe_area)
+
+        box = ((center_x, center_y), (width, height), 0)
+
+        pts = get_pts_from_rect(box)
+
+        for idx, pt in enumerate(pts):
+            self.__verify_inside_viewport(pt, "Rect%i" % idx)
+
+        if as_array:
+            return pts
+
+        return box
 
     def get_random_box2(self):
         # - select a direction on a unit circle

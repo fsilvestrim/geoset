@@ -1,5 +1,6 @@
 import abc
 import unittest
+import numpy as np
 
 from tests.test_utils import repeat
 from utils.procgeo import ProcGeo
@@ -31,6 +32,14 @@ class AProcGeoTest(metaclass=abc.ABCMeta):
     @repeat(100)
     def test__get_random_line__should_work_for_0_360_angle(self):
         self.cud.get_random_line(0, 360, False)
+
+    @unittest.expectedFailure
+    def test__get_random_open_triangles__should_fail_for_diff_angle_less_than_min(self):
+        self.cud.get_random_open_triangles(0, 3, 3, False)
+
+    @repeat(100)
+    def test__get_random_open_triangles__should_work_for_0_90_angle(self):
+        self.cud.get_random_open_triangles(0, 90, 10, False)
 
 
 class ProcGeoTest500(AProcGeoTest, unittest.TestCase):
@@ -65,6 +74,23 @@ class ProcGeoTestUtils(unittest.TestCase):
         boundaries = ProcGeo.get_min_max_bounds(val, minimum, maximum)
         self.assertEqual(expected_min, boundaries[0], "MIN - val:%i, min:%i, max:%i" % (val, minimum, maximum))
         self.assertEqual(expected_max, boundaries[1], "MAX - val:%i, min:%i, max:%i" % (val, minimum, maximum))
+
+    @parameterized.expand([
+        [0,     1,      0],  # 0
+        [45,    1,      1],  # 1
+        [90,    0,      1],  # 2
+        [135,  -1,      1],  # 3
+        [180,  -1,      0],  # 4
+        [225,  -1,     -1],  # 5
+        [270,   0,     -1],  # 6
+        [315,   1,     -1],  # 7
+        [360,   1,      0],  # 8
+        [360.1, 1,      0],  # 9
+    ])
+    def test__get_square_unit_projection(self, angle_degrees, expected_projection_x, expected_projection_y):
+        projections = ProcGeo.get_square_unit_projection(angle_degrees)
+        self.assertAlmostEqual(expected_projection_x, projections[0], delta=0.01, msg="X - angle:%i" % angle_degrees)
+        self.assertAlmostEqual(expected_projection_y, projections[1], delta=0.01, msg="Y - angle:%i" % angle_degrees)
 
 
 if __name__ == '__main__':
