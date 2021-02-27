@@ -9,7 +9,8 @@ class ProcGeo:
     def __init__(self, bounds, min_pts_distance=10, margin_safe_area=1):
         self.width = bounds[0]
         self.height = bounds[1]
-        self.bounds = np.array([self.width, self.height])
+        self.bounds = np.array([*bounds])
+        self.safe_bounds = self.bounds - margin_safe_area*2
         self.max_hypot = np.hypot(*bounds)
         self.margin_safe_area = margin_safe_area
         self.min_pts_distance = min_pts_distance
@@ -46,26 +47,17 @@ class ProcGeo:
         y_projection = np.tan(angle) * (-1 if 1 < angle / np.radians(90) <= 3 else 1)
         return np.round(np.clip(x_projection, -1, 1), 10), np.round(np.clip(y_projection, -1, 1), 10)
 
-    def get_max_size(self, angle, angle_is_in_radians=False):
-        projection = self.get_square_unit_projection(angle, angle_is_in_radians)
-        x, y = np.abs(projection)
-
-        # now we know the longest length
-        max_length_x = x * (self.width - self.margin_safe_area * 2)
-        max_length_y = y * (self.height - self.margin_safe_area * 2)
-
-        return max_length_x, max_length_y
-
     def get_random_line(self, start_angle_range_degree, end_angle_range_degree, as_array=True):
         # get random angle
         angle_degrees = self.safe_randint(start_angle_range_degree, high=end_angle_range_degree)
 
         # get random length
         scalar_bounds = self.get_square_unit_projection(angle_degrees)
-        scalar_length = np.random.uniform(self.min_pts_distance/self.max_hypot, high=1)
+        hypot_max_bounds = np.hypot(*np.multiply(scalar_bounds, self.bounds))
+        random_length = np.random.uniform(self.min_pts_distance/hypot_max_bounds)
 
         # find the new 2d pt from the origin
-        pt1 = np.multiply(np.multiply(scalar_bounds, scalar_length), self.bounds) - self.margin_safe_area * 2
+        pt1 = np.multiply(np.multiply(scalar_bounds, random_length), self.safe_bounds)
         pt1_x_min_max = self.get_min_max_bounds(pt1[0], self.margin_safe_area, self.width - self.margin_safe_area)
         pt1_y_min_max = self.get_min_max_bounds(pt1[1], self.margin_safe_area, self.height - self.margin_safe_area)
 
@@ -89,18 +81,17 @@ class ProcGeo:
                 start_angle_degree, end_angle_degree, min_angle_degree))
 
         # get random angle
-        p0_angle_radians = np.radians(np.random.randint(start_angle_degree, high=end_angle_degree))
-        p1_angle_radians = np.radians(np.random.randint(start_angle_degree + min_angle_degree, high=end_angle_degree))
+        p0_angle_degrees = self.safe_randint(start_angle_degree, high=end_angle_degree - min_angle_degree)
+        p1_angle_degrees = self.safe_randint(p0_angle_degrees + min_angle_degree, high=end_angle_degree)
 
         # get max length
-        p0_max_lengths = self.get_min_max_bounds(p0_angle_radians, True)
-        p1_max_lengths = self.get_min_max_bounds(p1_angle_radians, True)
+        p0_scalar_bounds = self.get_square_unit_projection(p0_angle_degrees)
+        p1_scalar_bounds = self.get_square_unit_projection(p1_angle_degrees)
+        diff_scalar_bounds = p0_scalar_bounds - p1_scalar_bounds
 
-        print(p0_max_lengths-p1_max_lengths)
-        # max_ = (self.min_pts_distance, high=self.get_max_length(start_radians))
-        end_length = np.random.randint(self.min_pts_distance, high=self.get_max_size(p1_angle_radians))
-        max_length = 0
-        length = np.random.randint(self.min_pts_distance, high=max_length)
+        random_length = np.random.uniform(self.min_pts_distance_in_square_unit_perc)
+
+        pt0 = np.multiply(np.multiply(p0_scalar_bounds, random_length), self.bounds) - self.margin_safe_area * 2
 
         # position the 2 random points in the circle unit and scale it
         pt0 = np.array([np.cos(p0_angle_radians) * max_length, np.sin(p0_angle_radians) * max_length])
