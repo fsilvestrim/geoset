@@ -41,11 +41,40 @@ class ProcGeo:
         return np.int0(low), np.int0(high)
 
     @staticmethod
+    def get_capped_angle_in_radians(angle, max_angle=360, angle_is_in_radians=False):
+        return angle % np.radians(max_angle) if angle_is_in_radians else np.radians(angle % max_angle)
+
+    @staticmethod
+    def get_quadrant(angle, angle_is_in_radians=False):
+        angle = angle if angle_is_in_radians else np.radians(angle)
+        quadrant = 1 + np.int0((angle / np.radians(90)) % 4)
+        return quadrant
+
+    @staticmethod
     def get_square_unit_projection(angle, angle_is_in_radians=False):
-        angle = angle % np.radians(360) if angle_is_in_radians else np.radians(angle % 360)
-        x_projection = 1/np.tan(angle) * (-1 if angle / np.radians(90) > 2 else 1)
-        y_projection = np.tan(angle) * (-1 if 1 < angle / np.radians(90) <= 3 else 1)
-        return np.round(np.clip(x_projection, -1, 1), 10), np.round(np.clip(y_projection, -1, 1), 10)
+        angle_radians = ProcGeo.get_capped_angle_in_radians(angle, angle_is_in_radians=angle_is_in_radians)
+        quadrant = ProcGeo.get_quadrant(angle_radians, angle_is_in_radians=True)
+
+        tan = np.tan(angle_radians)
+        cot = 1 if tan == 0 else 1/tan
+
+        x_projection = np.round(np.clip(np.abs(cot) * (-1 if 1 < quadrant <= 3 else 1), -1, 1), 10)
+        y_projection = np.round(np.clip(np.abs(tan) * (-1 if 2 < quadrant <= 4 else 1), -1, 1), 10)
+
+        # print("angle %i, quadrant % i => %.2f, %.2f" % (angle, quadrant, x_projection, y_projection))
+
+        return x_projection, y_projection
+
+    @staticmethod
+    def get_square_unit_min_max_projections(angles, angles_are_in_radians=False):
+        min_projection, max_projection = [-1, -1], [1, 1]
+
+        for angle in angles:
+            projection = ProcGeo.get_square_unit_projection(angle, angle_is_in_radians=angles_are_in_radians)
+            min_projection = np.maximum(min_projection, projection)
+            max_projection = np.minimum(max_projection, projection)
+
+        return min_projection, max_projection
 
     def get_random_line(self, start_angle_range_degree, end_angle_range_degree, as_array=True):
         # get random angle
@@ -87,22 +116,20 @@ class ProcGeo:
         # get max length
         p0_scalar_bounds = self.get_square_unit_projection(p0_angle_degrees)
         p1_scalar_bounds = self.get_square_unit_projection(p1_angle_degrees)
-        diff_scalar_bounds = p0_scalar_bounds - p1_scalar_bounds
 
-        random_length = np.random.uniform(self.min_pts_distance_in_square_unit_perc)
-
-        pt0 = np.multiply(np.multiply(p0_scalar_bounds, random_length), self.bounds) - self.margin_safe_area * 2
+        hypot_p0_max_bounds = np.hypot(*np.multiply(p0_scalar_bounds, self.bounds))
+        hypot_p1_max_bounds = np.hypot(*np.multiply(p1_scalar_bounds, self.bounds))
+        hypot_max_bounds = np.minimum(hypot_p0_max_bounds, hypot_p1_max_bounds)
+        random_length = np.random.uniform(self.min_pts_distance / hypot_max_bounds)
 
         # position the 2 random points in the circle unit and scale it
-        pt0 = np.array([np.cos(p0_angle_radians) * max_length, np.sin(p0_angle_radians) * max_length])
-        pt0_x_min_max = self.get_min_max_bounds(pt0[0], self.margin_safe_area, self.width - self.margin_safe_area)
-        pt0_y_min_max = self.get_min_max_bounds(pt0[1], self.margin_safe_area, self.height - self.margin_safe_area)
-
-        pt1 = np.array([np.cos(p1_angle_radians) * max_length, np.sin(p1_angle_radians) * max_length])
-        pt1_x_min_max = self.get_min_max_bounds(pt1[0], self.margin_safe_area, self.width - self.margin_safe_area)
-        pt1_y_min_max = self.get_min_max_bounds(pt1[1], self.margin_safe_area, self.height - self.margin_safe_area)
+        pt0 = np.multiply(np.multiply(p0_scalar_bounds, random_length), self.safe_bounds)
+        pt1 = np.multiply(np.multiply(p1_scalar_bounds, random_length), self.safe_bounds)
 
         # find the center point
+        center_x_min_max = self.get_min_max_bounds(pt0[0], self.margin_safe_area, self.width - self.margin_safe_area)
+        center_y_min_max = self.get_min_max_bounds(pt0[1], self.margin_safe_area, self.height - self.margin_safe_area)
+
         center_x = np.random.randint(np.maximum(pt0_x_min_max[0], pt1_x_min_max[0]),
                                      high=np.maximum(pt0_x_min_max[1], pt1_x_min_max[1]))
         center_y = np.random.randint(np.maximum(pt0_y_min_max[0], pt1_y_min_max[0]),

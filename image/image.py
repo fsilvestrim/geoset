@@ -42,11 +42,14 @@ class Image:
             prev_pt = pt
 
     def set_blur(self, ksize):
-        return cv2.blur(self.image, ksize)
+        self.image = cv2.blur(self.image, ksize)
 
     def save(self, full_path):
         if full_path.find('.') == -1:
             full_path = full_path + '.png'
+
+        from pathlib import Path
+        Path(full_path).parent.mkdir(parents=True, exist_ok=True)
 
         cv2.imwrite(full_path, self.image)
 
