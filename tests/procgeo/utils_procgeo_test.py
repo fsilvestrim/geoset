@@ -59,14 +59,5 @@ class ProcGeoTestUtils(unittest.TestCase):
         quadrant = ProcGeo.get_quadrant(angle_degrees)
         self.assertEqual(expected, quadrant, msg="angle:%i" % angle_degrees)
 
-    @parameterized.expand([
-        [[0, 0],    [0, 0],     [1, 0]],  # 0
-    ])
-    def test__get_square_unit_min_max_projections(self, angles_in_degrees, expected_min, expected_max):
-        projections = ProcGeo.get_square_unit_min_max_projections(angles_in_degrees)
-        self.assertEqual(expected_min, projections[0], msg="min - angles:%s" % angles_in_degrees)
-        self.assertEqual(expected_max, projections[1], msg="max - angles:%s" % angles_in_degrees)
-
-
 if __name__ == '__main__':
     unittest.main()

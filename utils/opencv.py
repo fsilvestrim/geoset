@@ -1,3 +1,5 @@
+from collections import Iterable
+
 import numpy as np
 import cv2
 
@@ -13,5 +15,13 @@ def get_pts_from_rect(rect):
     return np.int0(box)
 
 
-def cv_bl_2_tl(pt, bounds):
-    return pt[0], bounds[1] - pt[1]
+def cv_bl_2_tl(pts, bounds):
+    fn_projection = lambda pt: (pt[0], bounds[1] - pt[1])
+
+    if isinstance(pts, Iterable):
+        converted_points = []
+        for pt in pts:
+            converted_points.append(fn_projection(pt))
+        return tuple(converted_points)
+
+    return tuple(fn_projection(pts))

@@ -57,3 +57,8 @@ class Image:
         cv2.imshow(name, self.image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+    def get_grayscale(self):
+        gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+        gray = cv2.bitwise_not(gray)
+        return gray
