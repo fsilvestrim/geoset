@@ -21,9 +21,9 @@ class Image:
 
         return image
 
-    def add_ellipse(self, bound_pts, line_thickness=1, line_color="black"):
+    def add_ellipse(self, bounds, line_thickness=1, line_color="black"):
         line_color_ctv = opencv.get_cvt_color(Color(line_color).rgb)
-        cv2.ellipse(self.image, bound_pts, line_color_ctv, line_thickness)
+        cv2.ellipse(self.image, bounds, line_color_ctv, line_thickness)
 
     def add_simplex(self, bound_pts, line_thickness=1, line_color="black"):
         line_color_ctv = opencv.get_cvt_color(Color(line_color).rgb)

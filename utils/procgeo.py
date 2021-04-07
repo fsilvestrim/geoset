@@ -24,6 +24,10 @@ class ProcGeo:
     @staticmethod
     def safe_randint(low, high):
         low, high = np.int0(low), np.int0(high)
+
+        if low > high:
+            raise ValueError("Value low %i is bigger than high %i" % (low, high))
+
         return low if low == high else np.random.randint(low, high=high)
 
     @staticmethod
@@ -165,7 +169,37 @@ class ProcGeo:
                                      high=self.height - height * .5 - self.margin_safe_area)
 
         box = ((center_x, center_y), (width, height), 0)
+        pts = get_pts_from_rect(box)
 
+        for idx, pt in enumerate(pts):
+            self.__verify_inside_viewport(pt, "Rect%i" % idx)
+
+        if as_points_array:
+            return pts
+
+        return box
+
+    def get_random_rect_rotated(self, start_angle_range_degree=0, end_angle_range_degree=359,
+                                as_points_array=True, bounds_rect=None):
+        # get random bounding box
+        random_bounding_box = self.get_random_rect(equal_sides=True, as_points_array=False) if bounds_rect is None else bounds_rect
+        center = np.array(random_bounding_box[0])
+        size = np.array(random_bounding_box[1])
+
+        # get random
+        # angle
+        angle_degrees = self.safe_randint(start_angle_range_degree, high=end_angle_range_degree)
+
+        # find length
+        scalar_bounds = self.get_square_unit_projection(angle_degrees)
+        hypot_max_bounds = np.hypot(*np.multiply(scalar_bounds, size))
+        width = self.safe_randint(np.maximum(size[1]*.5, self.min_pts_distance), high=hypot_max_bounds-self.min_pts_distance)
+
+        # find height
+        rest_width = hypot_max_bounds - width
+        height = self.safe_randint(self.min_pts_distance, high=rest_width)
+
+        box = (center, (width, height), 180-angle_degrees)
         pts = get_pts_from_rect(box)
 
         for idx, pt in enumerate(pts):

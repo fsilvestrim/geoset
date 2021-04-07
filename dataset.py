@@ -24,7 +24,7 @@ if __name__ == "__main__":
                 image.add_lines(proc.get_random_line(43, 47, False), line_thickness)
             elif cat == 2:
                 # random ellipses
-                image.add_ellipse(proc.get_random_rect(False), line_thickness)
+                image.add_ellipse(proc.get_random_rect(True), line_thickness)
 
             if np.random.uniform() >= .5:
                 image.set_blur((np.random.randint(1, 5), np.random.randint(1, 5)))
