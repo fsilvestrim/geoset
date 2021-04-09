@@ -1,7 +1,20 @@
+import cv2
+import numpy as np
+
 from collections import Iterable
 
-import numpy as np
-import cv2
+
+def image_to_byte_array(image, size):
+    image = np.frombuffer(image, dtype='uint8').reshape((size[1], size[0], 3)).tobytes()
+    # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image
+
+
+def image_from_bytes(image_bytes, size):
+    image = np.frombuffer(image_bytes, dtype='uint8').reshape((size[1], size[0], 4))
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    # image = np.flip(image, 0).copy(order='C')
+    return image
 
 
 def get_cvt_color(scalar_color):
