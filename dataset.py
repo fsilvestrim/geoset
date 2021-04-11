@@ -2,7 +2,7 @@ import numpy as np
 from image.image import Image
 from utils.procgeo import ProcGeo
 
-Image.debug = False
+Image.DEBUG = False
 
 size = 28, 28
 line_thickness = 2

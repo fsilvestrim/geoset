@@ -1,8 +1,10 @@
 import moderngl
 import numpy as np
 
+from utils import opencv
 
-def get_new_image(size, image):
+
+def get_new_image(size, image, noise):
     ctx = moderngl.create_standalone_context()
 
     prog = ctx.program(
@@ -22,19 +24,27 @@ def get_new_image(size, image):
             #version 330
     
             uniform sampler2D texture0;
+            uniform sampler2D texture1;
     
             in vec2 uv;
             out vec4 f_color;
     
             void main() {
-                f_color = texture(texture0, uv);
+                vec4 noise = texture(texture1, uv);
+                vec2 displaced_uv = uv + noise.xy * vec2(0.01, 0.01);
+                vec4 image = texture(texture0, displaced_uv);
+                
+                f_color = image;
             }
         ''',
     )
 
     # Parameters
-    texture = ctx.texture(size, 3, image)
-    # texture = ctx.texture((2, 2), 3, np.array([200, 0, 0] * 4, dtype='f4').tobytes())
+    prog['texture0'] = 0
+    ctx.texture(image.shape[:2], 3, opencv.image_to_byte_array(image)).use(0)
+
+    prog['texture1'] = 1
+    ctx.texture(noise.shape[:2], 3, opencv.image_to_byte_array(noise)).use(1)
 
     # param_color = prog['Color']
     # param_color.value = (1, 0, 0)
@@ -56,7 +66,6 @@ def get_new_image(size, image):
     fbo.clear(1.0, 1.0, 1.0, 1.0)
 
     # Render
-    texture.use()
     vao.render(mode=moderngl.TRIANGLE_FAN)
 
     return fbo.read(size, components=4, dtype='f1')

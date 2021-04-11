@@ -1,11 +1,15 @@
+from typing import Tuple, Any
+
 import cv2
 import numpy as np
 
 from collections import Iterable
 
+from colour import Color
 
-def image_to_byte_array(image, size):
-    image = np.frombuffer(image, dtype='uint8').reshape((size[1], size[0], 3)).tobytes()
+
+def image_to_byte_array(image):
+    image = np.frombuffer(image, dtype='uint8').reshape((image.shape[1], image.shape[0], 3)).tobytes()
     # image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
 
@@ -17,8 +21,13 @@ def image_from_bytes(image_bytes, size):
     return image
 
 
-def get_cvt_color(scalar_color):
-    color_hex = [x * 255 for x in scalar_color]
+def get_cvt_color(color: Any):
+    if type(color) is not tuple:
+        color = Color(color).rgb
+    elif type(color) is Color:
+        color = color.rgb
+
+    color_hex = [x * 255 for x in color]
     return tuple(reversed(color_hex))
     # return cv2.cvtColor(rgb_color, cv2.COLOR_BGR2RGB)
 
@@ -26,6 +35,12 @@ def get_cvt_color(scalar_color):
 def get_pts_from_rect(rect):
     box = cv2.boxPoints(rect)
     return np.int0(box)
+
+
+def get_grayscale(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.bitwise_not(gray)
+    return gray
 
 
 def cv_bl_2_tl(pts, bounds):
