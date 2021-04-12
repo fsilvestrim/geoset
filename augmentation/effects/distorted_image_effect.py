@@ -26,7 +26,7 @@ class DistortedImageEffect(ImageEffect):
     
             void main() {
                 vec4 noise_color = texture(noise, uv);
-                vec2 displaced_uv = uv + noise_color.xy * vec2(factor, factor);
+                vec2 displaced_uv = uv + (noise_color.xy * vec2(factor, factor));
                 f_color = texture(image, displaced_uv);
             }
         '''

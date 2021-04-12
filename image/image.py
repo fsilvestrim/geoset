@@ -14,7 +14,7 @@ class Image:
     DEFAULT_LINE_COLOR = RGB.BLACK
     DEFAULT_BACKGROUND_COLOR = RGB.WHITE
 
-    def __init__(self, size: Tuple[int, int], color: Any = DEFAULT_BACKGROUND_COLOR):
+    def __init__(self, size: Tuple[int, int], color: Any = DEFAULT_BACKGROUND_COLOR) -> None:
         self.size = size
         self.image = np.zeros((self.size[0], self.size[1], 3), np.uint8)
         self.clear(color)
@@ -70,7 +70,7 @@ class Image:
 
     def set_blur(self, kernel_size: Tuple[int, int]) -> None:
         start_time = time.perf_counter()
-        self.image = cv2.blur(self.image, kernel_size)
+        self.image = cv2.GaussianBlur(self.image, kernel_size, 0)
 
         if Image.DEBUG:
             print("Blur took: %s seconds" % (time.perf_counter() - start_time))
@@ -80,6 +80,7 @@ class Image:
 
         effect.set_image(self.image)
         self.set_image(effect.render(self.size))
+        effect.release()
 
         if Image.DEBUG:
             print("Effect took: %s seconds" % (time.perf_counter() - start_time))

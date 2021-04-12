@@ -46,10 +46,10 @@ class Effect:
     def _get_vertex_info(self):
         vbo = self._context.buffer(np.array([
             # x, y,         u, v
-            1.0, 1.0,       1.0, 1.0,
-            1.0, -1.0,      1.0, 0.0,
-            -1.0, -1.0,     0.0, 0.0,
-            -1.0, 1.0,      0.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, -1.0, 1.0, 0.0,
+            -1.0, -1.0, 0.0, 0.0,
+            -1.0, 1.0, 0.0, 1.0,
         ], dtype='f4').tobytes())
 
         vao = self._context.vertex_array(self._program, [(vbo, '2f 2f', 'in_vert', 'in_uv')])
@@ -72,3 +72,6 @@ class Effect:
         vao.render(mode=moderngl.TRIANGLE_FAN)
 
         return fbo.read(size, components=4, dtype='f1')
+
+    def release(self):
+        self._context.release()
