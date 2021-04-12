@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Any
 
 import moderngl
 import numpy as np
@@ -9,6 +9,10 @@ class Effect:
         self._context = moderngl.create_standalone_context()
         self._program = self._context.program(vertex_shader=self.get_vertex_shader(),
                                               fragment_shader=self.get_fragment_shader())
+
+    def set_uniform(self, name: str, value: Any):
+        uniform = self._program[name]
+        uniform.value = value
 
     def get_vertex_shader(self):
         return '''

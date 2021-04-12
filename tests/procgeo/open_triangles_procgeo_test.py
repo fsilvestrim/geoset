@@ -2,7 +2,7 @@ import abc
 import unittest
 
 from tests.utils.test_utils import repeat
-from utils.procgeo import ProcGeo
+from procedural.procgeo import ProcGeo
 
 
 REPEAT = 300

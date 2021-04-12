@@ -1,3 +1,3 @@
 import unittest
 
-from utils.procgeo import ProcGeo
+from procedural.procgeo import ProcGeo

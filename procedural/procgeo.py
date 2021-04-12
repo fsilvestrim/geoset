@@ -1,9 +1,7 @@
-import warnings
+from collections import Iterable
 
+import cv2
 import numpy as np
-
-from utils.opencv import get_pts_from_rect, cv_bl_2_tl
-
 
 class ProcGeo:
     def __init__(self, bounds, min_pts_distance=10, margin_safe_area=1):
@@ -20,6 +18,23 @@ class ProcGeo:
             msg = "point %s(%s) outside of the viewport (%i,%i)" % (
                 '' if label is None else label, pt, self.width, self.height)
             raise ValueError(msg)
+
+    @staticmethod
+    def get_pts_from_rect(rect):
+        box = cv2.boxPoints(rect)
+        return np.int0(box)
+
+    @staticmethod
+    def cv_bl_2_tl(pts, bounds):
+        fn_projection = lambda pt: (pt[0], bounds[1] - pt[1])
+
+        if isinstance(pts, Iterable):
+            converted_points = []
+            for pt in pts:
+                converted_points.append(fn_projection(pt))
+            return tuple(converted_points)
+
+        return tuple(fn_projection(pts))
 
     @staticmethod
     def safe_randint(low, high):
@@ -65,7 +80,7 @@ class ProcGeo:
         x_projection = np.round(np.clip(np.abs(cot) * (-1 if 1 < quadrant <= 3 else 1), -1, 1), 10)
         y_projection = np.round(np.clip(np.abs(tan) * (-1 if 2 < quadrant <= 4 else 1), -1, 1), 10)
 
-        print("angle %i, quadrant % i => %.2f, %.2f" % (angle, quadrant, x_projection, y_projection))
+        # print("angle %i, quadrant % i => %.2f, %.2f" % (angle, quadrant, x_projection, y_projection))
 
         return x_projection, y_projection
 
@@ -76,7 +91,7 @@ class ProcGeo:
         x_projection = np.round(np.cos(angle_radians), 10)
         y_projection = np.round(np.sin(angle_radians), 10)
 
-        print("angle %i => %.2f, %.2f" % (angle, x_projection, y_projection))
+        # print("angle %i => %.2f, %.2f" % (angle, x_projection, y_projection))
 
         return x_projection, y_projection
 
@@ -120,7 +135,7 @@ class ProcGeo:
         self.__verify_inside_viewport(pt0, "Line0")
         self.__verify_inside_viewport(pt1, "Line1")
 
-        points = cv_bl_2_tl([pt0, pt1], self.bounds)
+        points = ProcGeo.cv_bl_2_tl([pt0, pt1], self.bounds)
         return ProcGeo._get_values(points, as_points_array)
 
     def get_random_open_triangles(self, start_angle_degree, end_angle_degree, degree_of_freedom, as_points_array=True):
@@ -152,7 +167,7 @@ class ProcGeo:
         self.__verify_inside_viewport(pt0, "OpenTri0")
         self.__verify_inside_viewport(pt1, "OpenTri1")
 
-        points = cv_bl_2_tl([pt0, center, pt1], self.bounds)
+        points = ProcGeo.cv_bl_2_tl([pt0, center, pt1], self.bounds)
         return ProcGeo._get_values(points, as_points_array)
 
     def get_random_rect(self, equal_sides=False, as_points_array=True):
@@ -169,7 +184,7 @@ class ProcGeo:
                                      high=self.height - height * .5 - self.margin_safe_area)
 
         box = ((center_x, center_y), (width, height), 0)
-        pts = get_pts_from_rect(box)
+        pts = self.get_pts_from_rect(box)
 
         for idx, pt in enumerate(pts):
             self.__verify_inside_viewport(pt, "Rect%i" % idx)
@@ -200,7 +215,7 @@ class ProcGeo:
         height = self.safe_randint(self.min_pts_distance, high=rest_width)
 
         box = (center, (width, height), 180-angle_degrees)
-        pts = get_pts_from_rect(box)
+        pts = self.get_pts_from_rect(box)
 
         for idx, pt in enumerate(pts):
             self.__verify_inside_viewport(pt, "Rect%i" % idx)
