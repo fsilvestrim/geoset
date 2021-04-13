@@ -113,9 +113,11 @@ class ProcGeo:
 
         return values
 
-    def get_random_line(self, start_angle_range_degree, end_angle_range_degree, as_points_array=True):
+    def get_random_line(self, target_angle_in_degree, degree_of_freedom, as_points_array=True):
         # get random angle
-        angle_degrees = self.safe_randint(start_angle_range_degree, high=end_angle_range_degree)
+        half_degree_of_freedom = degree_of_freedom * .5
+        angle_degrees = self.safe_randint(target_angle_in_degree - half_degree_of_freedom,
+                                          high=target_angle_in_degree + half_degree_of_freedom)
 
         # get random length
         scalar_bounds = self.get_square_unit_projection(angle_degrees)

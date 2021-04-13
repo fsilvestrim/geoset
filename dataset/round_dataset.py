@@ -11,7 +11,7 @@ from image.image import Image
 from procedural.procgeo import ProcGeo
 
 
-class SimpleDataset(Dataset):
+class RoundDataset(Dataset):
     class Category(Enum):
         VERTICAL_LINE = 0
         HORIZONTAL_LINE = 1
@@ -43,11 +43,11 @@ class SimpleDataset(Dataset):
         elif self.Category.DIAGONAL_LINE.value == category_idx:
             image.add_lines(proc.get_random_line(45, 15, False), self.__stroke_thickness)
         elif self.Category.ELLIPSE.value == category_idx:
-            image.add_ellipse(proc.get_random_rect(True, False), 0, 360, self.__stroke_thickness)
+            image.add_ellipse(proc.get_random_rect(True, False), self.__stroke_thickness)
         elif self.Category.GREATER_THAN.value == category_idx:
-            image.add_lines(proc.get_random_open_triangles(135, 225, 10, False), self.__stroke_thickness)
+            image.add_ellipse(proc.get_random_rect(True, False), 270, 450, self.__stroke_thickness)
         elif self.Category.LOWER_THAN.value == category_idx:
-            image.add_lines(proc.get_random_open_triangles(45, 315, 10, False), self.__stroke_thickness)
+            image.add_ellipse(proc.get_random_rect(True, False), 90, 270, self.__stroke_thickness)
 
         if np.random.uniform() >= .5:
             image.set_blur((random.randrange(1, 10, 2), random.randrange(1, 10, 2)))

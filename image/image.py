@@ -44,9 +44,13 @@ class Image:
         else:
             self.image = image
 
-    def add_ellipse(self, bounds: Tuple[Tuple[int, int], Tuple[int, int], int],
-                    line_thickness: int = DEFAULT_LINE_THICKNESS, line_color: Any = DEFAULT_LINE_COLOR) -> None:
-        cv2.ellipse(self.image, bounds, self.get_cvt_color(line_color), line_thickness)
+    def add_ellipse(self, box: Tuple[Tuple[int, int], Tuple[int, int], int],
+                    start_angle_degrees: int = 0, end_angle_degrees: int = 360,
+                    line_thickness: int = DEFAULT_LINE_THICKNESS,
+                    line_color: Any = DEFAULT_LINE_COLOR) -> None:
+        cv2.ellipse(self.image, center=box[0], axes=tuple(np.int0(np.multiply(box[1], .5))), angle=box[2],
+                    startAngle=start_angle_degrees, endAngle=end_angle_degrees, color=self.get_cvt_color(line_color),
+                    thickness=line_thickness)
 
     def add_simplex(self, bound_pts: np.ndarray, line_thickness: int = DEFAULT_LINE_THICKNESS,
                     line_color: Any = DEFAULT_LINE_COLOR) -> None:

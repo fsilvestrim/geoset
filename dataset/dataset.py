@@ -6,9 +6,8 @@ from shutil import rmtree
 from typing import Tuple
 
 import cv2
-from PIL import Image, ImageOps
-
 import numpy as np
+from PIL import Image
 from progress.bar import Bar
 
 
@@ -64,7 +63,7 @@ class Dataset(metaclass=abc.ABCMeta):
     def _generate_image(self, ci_si: Tuple[int, int]) -> Tuple[int, int, np.array]:
         pass
 
-    def save_npz(self, file_name: str, test_size: float = .3):
+    def save_npz(self, test_size: float = .3, file_name: str = 'dataset'):
         indexes = np.random.permutation(self.__total_samples)
         x, y = self.__x[indexes], self.__y[indexes]
 
