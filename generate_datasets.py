@@ -4,10 +4,11 @@ from dataset.threesixty_dataset import ThreeSixtyDataset
 
 image_size = 28, 28
 samples_per_category = 10
-destination = "./output/simple"
+destination = "./output"
 
 if __name__ == "__main__":
-    dataset = ThreeSixtyDataset(samples_per_category, image_size, destination, save_images=False)
-    dataset.generate()
-    dataset.save_npz()
-    dataset.save_thumbnails(10, 2)
+    for dataset_cls in (SimpleDataset, RoundDataset, ThreeSixtyDataset):
+        dataset = dataset_cls(samples_per_category, image_size, destination, save_images=False)
+        dataset.generate()
+        dataset.save_npz()
+        dataset.save_thumbnails(10, 2)

@@ -1,3 +1,4 @@
+import os
 import random
 from typing import Tuple
 
@@ -56,6 +57,8 @@ class SimpleDataset(Dataset):
             image.apply_effect(DistortedImageEffect(np.random.uniform(0.01, 0.1)))
 
         if self.__save_images:
-            image.save("%s/image_%i_%i.png" % (self._destination, category_idx, sample_idx))
+            path = f'{self._destination}/{self.name}'
+            os.makedirs(path)
+            image.save(f'{path}/image_{category_idx}_{sample_idx}.png')
 
         return category_idx, sample_idx, np.array([image.get_grayscale()])

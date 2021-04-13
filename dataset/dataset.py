@@ -24,16 +24,27 @@ class Dataset(metaclass=abc.ABCMeta):
         self.__x = np.empty((self.__total_samples, *image_size), dtype=np.float32)
         self.__y = np.empty(self.__total_samples, dtype=np.uint32)
 
-        self.clear()
+        self._clear(self.name)
+
+    @property
+    def name(self):
+        return self.__class__.__name__.lower()
+
+    def __getitem__(self, key):
+        if key.startswith('_'):
+            return None
+        return getattr(self, key, None)
 
     def _get_image_idx(self, category, sample):
         return (category * self.__num_samples) + sample
 
-    def clear(self):
-        if os.path.exists(self._destination):
-            rmtree(self._destination)
-
-        os.makedirs(self._destination)
+    def _clear(self, file_or_folder: str):
+        path = f'{self._destination}/{file_or_folder}'
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                rmtree(path)
+            else:
+                os.remove(path)
 
     def generate(self):
         start_time = time.perf_counter()
@@ -56,14 +67,14 @@ class Dataset(metaclass=abc.ABCMeta):
               "\n\tTotal:%d "
               "\n\tDestination:%s "
               "\n\tTook:%.2fs" %
-              (self.__class__.__name__, self.__num_categories, self.__num_samples, self.__total_samples,
+              (self.name, self.__num_categories, self.__num_samples, self.__total_samples,
                self._destination, time.perf_counter() - start_time))
 
     @abc.abstractmethod
     def _generate_image(self, ci_si: Tuple[int, int]) -> Tuple[int, int, np.array]:
         pass
 
-    def save_npz(self, test_size: float = .3, file_name: str = 'dataset'):
+    def save_npz(self, test_size: float = .3, file_name: str = '%(name)s_dataset'):
         indexes = np.random.permutation(self.__total_samples)
         x, y = self.__x[indexes], self.__y[indexes]
 
@@ -71,10 +82,12 @@ class Dataset(metaclass=abc.ABCMeta):
         x_train, y_train = x[:-test_num], y[:-test_num]
         x_test, y_test = x[-test_num:], y[-test_num:]
 
-        np.savez('%s/%s.npz' % (self._destination, file_name),
-                 x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+        path = f'{self._destination}/{file_name % self}.npz'
+        self._clear(path)
+        np.savez(path, x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
 
-    def save_thumbnails(self, examples_per_category: int = 10, scale: float = 1.0, filename: str = 'thumbnails'):
+    def save_thumbnails(self, examples_per_category: int = 10, scale: float = 1.0,
+                        file_name: str = '%(name)s_thumbnails'):
         sample_size = np.int0(np.multiply(self._image_size, scale))
         thumbnail_size = np.int0(np.multiply((examples_per_category, self.__num_categories), sample_size))
         thumbnail_image = Image.new('RGB', tuple(thumbnail_size))
@@ -89,4 +102,6 @@ class Dataset(metaclass=abc.ABCMeta):
                 sample_position = (sample_size[0] * i, sample_size[1] * category_idx)
                 thumbnail_image.paste(sample_image, sample_position)
 
-        thumbnail_image.save('%s/%s.png' % (self._destination, filename))
+        path = f'{self._destination}/{file_name % self}.png'
+        self._clear(path)
+        thumbnail_image.save(path)
