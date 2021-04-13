@@ -5,6 +5,9 @@ import time
 from shutil import rmtree
 from typing import Tuple
 
+import cv2
+from PIL import Image, ImageOps
+
 import numpy as np
 from progress.bar import Bar
 
@@ -24,6 +27,9 @@ class Dataset(metaclass=abc.ABCMeta):
 
         self.clear()
 
+    def _get_image_idx(self, category, sample):
+        return (category * self.__num_samples) + sample
+
     def clear(self):
         if os.path.exists(self._destination):
             rmtree(self._destination)
@@ -37,7 +43,7 @@ class Dataset(metaclass=abc.ABCMeta):
         with concurrent.futures.ProcessPoolExecutor() as executor:
             for category_idx, sample_idx, image in \
                     executor.map(self._generate_image, np.ndindex((self.__num_categories, self.__num_samples))):
-                dataset_idx = (category_idx * self.__num_samples) + sample_idx
+                dataset_idx = self._get_image_idx(category_idx, sample_idx)
                 self.__x[dataset_idx] = image
                 self.__y[dataset_idx] = category_idx
                 bar.next()
@@ -68,3 +74,20 @@ class Dataset(metaclass=abc.ABCMeta):
 
         np.savez('%s/%s.npz' % (self._destination, file_name),
                  x_train=x_train, y_train=y_train, x_test=x_test, y_test=y_test)
+
+    def save_thumbnails(self, examples_per_category: int = 10, scale: float = 1.0, filename: str = 'thumbnails'):
+        sample_size = np.int0(np.multiply(self._image_size, scale))
+        thumbnail_size = np.int0(np.multiply((examples_per_category, self.__num_categories), sample_size))
+        thumbnail_image = Image.new('RGB', tuple(thumbnail_size))
+
+        for category_idx in range(self.__num_categories):
+            for i in range(examples_per_category):
+                sample_idx = np.random.randint(0, self.__num_samples)
+                dataset_idx = self._get_image_idx(category_idx, sample_idx)
+                resized_sample = cv2.resize(self.__x[dataset_idx], tuple(sample_size))
+                sample_image = Image.fromarray(255 - resized_sample)
+
+                sample_position = (sample_size[0] * i, sample_size[1] * category_idx)
+                thumbnail_image.paste(sample_image, sample_position)
+
+        thumbnail_image.save('%s/%s.png' % (self._destination, filename))
