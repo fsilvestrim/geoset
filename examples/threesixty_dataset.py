@@ -4,10 +4,10 @@ from typing import Tuple
 
 import numpy as np
 
-from augmentation.effects.distorted_image_effect import DistortedImageEffect
-from dataset.dataset import Dataset
-from image.image import Image
-from procedural.procgeo import ProcGeo
+from geoset.augmentation.effects.distorted_image_effect import DistortedImageEffect
+from geoset.dataset.dataset import Dataset
+from geoset.image.image import Image
+from geoset.procedural.procgeo import ProcGeo
 
 
 class ThreeSixtyDataset(Dataset):
@@ -15,7 +15,7 @@ class ThreeSixtyDataset(Dataset):
                  destination: str, stroke_thickness: int = 2, save_images: bool = False) -> None:
         self.__save_images = save_images
         self.__stroke_thickness = stroke_thickness
-        self.__sample_every = 5
+        self.__sample_every = 10
 
         super().__init__(np.int0(180/self.__sample_every), samples_per_category, image_size, destination)
 

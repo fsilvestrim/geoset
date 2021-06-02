@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from colour import Color, RGB
 
-from augmentation.effects.image_effect import ImageEffect
+from geoset.augmentation.effects.image_effect import ImageEffect
 
 
 class Image:

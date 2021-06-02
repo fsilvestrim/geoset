@@ -2,7 +2,7 @@ import unittest
 
 from parameterized import parameterized
 
-from procedural.procgeo import ProcGeo
+from geoset.procedural import ProcGeo
 
 
 class ProcGeoTestUtils(unittest.TestCase):

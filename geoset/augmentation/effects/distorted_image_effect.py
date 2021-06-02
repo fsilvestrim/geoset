@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from os import path
-from augmentation.effects.image_effect import ImageEffect
+from geoset.augmentation.effects.image_effect import ImageEffect
 
 
 class DistortedImageEffect(ImageEffect):

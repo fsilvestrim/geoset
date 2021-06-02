@@ -65,6 +65,10 @@ class ProcGeo:
         return angle % np.radians(max_angle) if angle_is_in_radians else np.radians(angle % max_angle)
 
     @staticmethod
+    def get_safe_angle(angle_in_degrees):
+        return angle_in_degrees if angle_in_degrees > 0 else 360 - angle_in_degrees
+
+    @staticmethod
     def get_quadrant(angle, angle_is_in_radians=False):
         angle = angle if angle_is_in_radians else np.radians(angle)
         quadrant = 1 + np.int0((angle / np.radians(90)) % 4)
@@ -147,11 +151,17 @@ class ProcGeo:
         #         start_angle_degree, end_angle_degree, degree_of_freedom))
 
         # get random angle
-        half_degree_of_freedom = degree_of_freedom * .5
-        p0_angle_degrees = self.safe_randint(start_angle_degree - half_degree_of_freedom,
-                                             high=start_angle_degree + half_degree_of_freedom)
-        p1_angle_degrees = self.safe_randint(end_angle_degree - half_degree_of_freedom,
-                                             high=end_angle_degree + half_degree_of_freedom)
+        half_degree_of_freedom = self.safe_randint(0, degree_of_freedom * .5)
+
+        # find direction of the angles
+        if np.abs(start_angle_degree - end_angle_degree) < 180:
+            # inner (+start -end)
+            p0_angle_degrees = self.get_safe_angle(start_angle_degree + half_degree_of_freedom)
+            p1_angle_degrees = self.get_safe_angle(end_angle_degree - half_degree_of_freedom)
+        else:
+            # outer (-start + end)
+            p0_angle_degrees = self.get_safe_angle(start_angle_degree - half_degree_of_freedom)
+            p1_angle_degrees = self.get_safe_angle(end_angle_degree + half_degree_of_freedom)
 
         # get random bounding box
         random_bounding_box = self.get_random_rect(equal_sides=True, as_points_array=False)

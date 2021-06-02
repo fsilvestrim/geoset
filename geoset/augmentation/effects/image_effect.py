@@ -1,7 +1,7 @@
 import numpy as np
 from moderngl import Texture
 
-from augmentation.effect import Effect
+from geoset.augmentation.effect import Effect
 
 
 class ImageEffect(Effect):

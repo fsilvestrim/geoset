@@ -1,8 +1,8 @@
 import abc
 import unittest
 
-from tests.utils.test_utils import repeat
-from procedural.procgeo import ProcGeo
+from geoset.tests.utils.test_utils import repeat
+from geoset.procedural import ProcGeo
 
 
 REPEAT = 300

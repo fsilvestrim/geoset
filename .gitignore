@@ -48,5 +48,6 @@ Thumbs.db
 *.mov
 *.wmv
 
+# default output folder for the examples
 output/
 
