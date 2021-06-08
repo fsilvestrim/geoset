@@ -1,6 +1,6 @@
 GeoSet
 ----------------------
-GeoSet is a 2D Geometrical Dataset framework.
+GeoSet is python framework which enables the creation 2D Geometrical Dataset.
 
 The main of this framework is to enable the creation of different 2D geometrical datasets extending simple polygons' generation.
 
@@ -66,11 +66,11 @@ More examples can be found [here](examples)
 ## Citation
 If you intend to publish a paper don't forget to cite the dataset:
 ```
-@misc{ghesla-silvestrim-02192021,
-	author = {Ghesla Silvestrim, FGS},
-	title = {{GeoSet}},
-	url = {https://github.com/fsilvestrim/geoset},
-	year = {02.19.2021},
+@misc{silvestrim2021geoset,
+	title = {GeoSet},
+	author = {Ghesla Silvestrim, Filipe},
+	year = {2021},
+	howpublished = {\url{https://github.com/fsilvestrim/geoset}},
 }
 ```
 
