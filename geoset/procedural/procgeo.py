@@ -117,6 +117,21 @@ class ProcGeo:
 
         return values
 
+    def get_random_angle(self, start_angle_in_degree, end_angle_in_degree, degree_of_freedom):
+        half_degree_of_freedom = self.safe_randint(0, degree_of_freedom * .5)
+
+        # find direction of the angles
+        if np.abs(start_angle_in_degree - end_angle_in_degree) < 180:
+            # inner (+start -end)
+            start_angle_in_degree = self.get_safe_angle(start_angle_in_degree + half_degree_of_freedom)
+            end_angle_in_degree = self.get_safe_angle(end_angle_in_degree - half_degree_of_freedom)
+        else:
+            # outer (-start + end)
+            start_angle_in_degree = self.get_safe_angle(start_angle_in_degree - half_degree_of_freedom)
+            end_angle_in_degree = self.get_safe_angle(end_angle_in_degree + half_degree_of_freedom)
+
+        return start_angle_in_degree, end_angle_in_degree
+
     def get_random_line(self, target_angle_in_degree, degree_of_freedom, as_points_array=True):
         # get random angle
         half_degree_of_freedom = degree_of_freedom * .5
@@ -146,22 +161,10 @@ class ProcGeo:
         return ProcGeo._get_values(points, as_points_array)
 
     def get_random_open_triangles(self, start_angle_degree, end_angle_degree, degree_of_freedom, as_points_array=True):
-        # if np.diff(end_angle_degree, start_angle_degree) < degree_of_freedom * 2:
-        #     raise ValueError("The angle between start (%i) and end (%i) is less than the degree of freedom %i" % (
-        #         start_angle_degree, end_angle_degree, degree_of_freedom))
-
         # get random angle
-        half_degree_of_freedom = self.safe_randint(0, degree_of_freedom * .5)
-
-        # find direction of the angles
-        if np.abs(start_angle_degree - end_angle_degree) < 180:
-            # inner (+start -end)
-            p0_angle_degrees = self.get_safe_angle(start_angle_degree + half_degree_of_freedom)
-            p1_angle_degrees = self.get_safe_angle(end_angle_degree - half_degree_of_freedom)
-        else:
-            # outer (-start + end)
-            p0_angle_degrees = self.get_safe_angle(start_angle_degree - half_degree_of_freedom)
-            p1_angle_degrees = self.get_safe_angle(end_angle_degree + half_degree_of_freedom)
+        p0_angle_degrees, p1_angle_degrees = self.get_random_angle(start_angle_degree,
+                                                                   end_angle_degree,
+                                                                   degree_of_freedom)
 
         # get random bounding box
         random_bounding_box = self.get_random_rect(equal_sides=True, as_points_array=False)
@@ -239,3 +242,5 @@ class ProcGeo:
             return pts
 
         return box
+
+    #TODO: https://math.stackexchange.com/questions/2645689/what-is-the-parametric-equation-of-a-rotated-ellipse-given-the-angle-of-rotatio
